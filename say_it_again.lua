@@ -55,7 +55,8 @@ Abbreviations used in code:
 local sia_settings =
 {
     --charset = "iso-8859-1", -- works for english and french subtitles (try also "Windows-1252")
-    charset = nil,          -- UT8 encoding
+    charset = "Windows-1251",
+    --charset = nil,          -- UTF8 encoding
     dict_dir = "c:/!MY_DOCS/say_it_again/dict",            -- where Stardict dictionaries are located
     wordnet_dir = "c:/!MY_DOCS/say_it_again/WordNet", -- where WordNet files are located
     --chosen_dict = "c:/!MY_DOCS/say_it_again/dict/Oxford Advanced Learner's Dictionary", -- Stardict dictionary used by default (there should be 3 files with this name but different extensions)
@@ -74,7 +75,7 @@ local sia_settings =
     key_always_show_subs = 114, -- R
     
     -- global subtitles time shift to compensate vlc audio start delay or lack of subtitles synchronization
-    subs_time_shift = -2.5
+    subs_time_shift = 0
 }
 
 
@@ -290,7 +291,6 @@ Subtitles.__index = Subtitles
 function Subtitles.create()
   local o = 
   {
-      path = nil,
       loaded = false,
       currents = {}, -- indexes of current subtitles
 
@@ -306,19 +306,14 @@ function Subtitles.create()
   return o
 end
 
-function Subtitles:load(spath)
-    self.loaded = false
+function Subtitles:load(uri)
+    if is_nil_or_empty(uri) then return false, "cant load subtitles: path is nil" end
 
-    if is_nil_or_empty(spath) then return false, "cant load subtitles: path is nil" end
-
-    if spath == self.path then
-        self.loaded = true
+    if self.loaded then
         return false, "cant load subtitles: already loaded"
     end
-
-    self.path = spath
-
-    local data = read_file(self.path)
+    
+    local data = read_file_uri(uri)
     if not data then return false end
  
     data = data:gsub("\r\n", "\n") -- fixes issues with Linux
@@ -343,7 +338,7 @@ function Subtitles:load(spath)
 
     self.loaded = true
 
-    log("loaded subtitles: " .. self.path)
+    log("loaded subtitles: " .. uri)
 
     return true
 end
@@ -955,21 +950,6 @@ function get_title()
     end
 end
 
-function uri_to_path(uri, is_unix_platform)
-    if is_nil_or_empty(uri) then return "" end
-    local path
-    if not is_unix_platform then
-        if uri:match("file://[^/]") then -- path to windows share
-            path = uri:gsub("file://", "\\\\")
-        else
-            path = uri:gsub("file:///", "")
-        end
-        return path:gsub("/", "\\")
-    else
-        return uri:gsub("file://", "")
-    end
-end
-
 function is_unix_platform()
     if string.match(vlc.config.homedir(), "^/") then
         return true
@@ -982,8 +962,7 @@ function get_subtitles_path_impl(ext)
     local item = get_input_item()
     if not item then return "" end
 
-    local path_to_video = uri_to_path(vlc.strings.decode_uri(item:uri()), is_unix_platform())
-    log(path_to_video)
+    local path_to_video = item:uri()
 
     return path_to_video:gsub("\.[^.]*$", ext)
 end
@@ -1054,6 +1033,35 @@ function read_file(path, binary)
 
     return res
 end
+
+function read_file_uri(uri)
+    if is_nil_or_empty(uri) then
+        log("Can't open file: URI is empty")
+        return nil
+    end
+    
+    local stream = vlc.stream(uri)
+
+    if not stream then
+        log("Can't open file '".. vlc.strings.decode_uri(uri) .. "' (" .. uri .. ")")
+        return nil
+    end
+    
+    local res = ""
+    local cur
+    
+    while true do
+        cur = stream:read(65536)
+        
+        if not cur then
+            stream = nil
+            log( "File loaded: '".. vlc.strings.decode_uri(uri) .. "' (" .. uri .. ") size: " .. #res )
+            return res
+        end
+    
+        res = res .. cur
+    end
+ end
 
 function is_nil_or_empty(str)
     return not str or str == ""
