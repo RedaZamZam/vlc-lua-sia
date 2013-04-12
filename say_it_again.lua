@@ -75,7 +75,7 @@ local sia_settings =
     key_always_show_subs = 114, -- R
     
     -- global subtitles time shift to compensate vlc audio start delay or lack of subtitles synchronization
-    subs_time_shift = 0
+    subs_time_shift = -0.5
 }
 
 
@@ -810,9 +810,12 @@ function gui_show_dialog_save_word(curr_subtitle)
         g_dlg.w.list_file:add_value("could not open the file :(", 0)
     else
         g_words_file:seek("set")
-        for line in g_words_file:lines() do
-            g_dlg.w.list_file:add_value(line, 0)
-        end 
+        
+        for text in string.gmatch(g_words_file:read("*all"), "(.-)\n\n") do
+            if not is_nil_or_empty(text) then
+                g_dlg.w.list_file:add_value(text, 0)
+            end
+        end
     end
 
     g_current_dialog = "save_word"
@@ -861,10 +864,10 @@ function gui_save_word()
         def = gui_def2str(g_dlg.w.list_def:get_selection())
     end
 
-    if is_nil_or_empty(word) or is_nil_or_empty(def) then
-        log("either no word or no definition selected")
-        return
-    end
+    --if is_nil_or_empty(word) or is_nil_or_empty(def) then
+    --    log("either no word or no definition selected")
+    --    return
+    --end
 
     local transcription = g_dlg.tr and ("["..g_dlg.tr.."]") or ""
 
@@ -872,12 +875,17 @@ function gui_save_word()
     local context_n = string.gsub(g_dlg.w.tb_curr_s2:get_text(), "\n", " ") or ""
     local tags = get_title() or ""
 
-    local res = context .. "\t" .. context_n .. "\t" .. word .. "\t" .. transcription .. "\t" .. def
+    -- local res = context .. "\t" .. context_n .. "\t" .. word .. "\t" .. transcription .. "\t" .. def
+    local res = context 
+    
+    if not is_nil_or_empty(context_n) then
+        res = res .. "\n" .. context_n
+    end
     
     g_dlg.w.tb_def:set_text("") -- clear custom definition
 
     g_dlg.w.list_file:add_value(res, 0)
-    g_words_file:write(res .. "\r\n")
+    g_words_file:write(res .. "\n\n")
     g_words_file:flush()
 end
 
