@@ -54,13 +54,16 @@ Abbreviations used in code:
 --[[  Settings  ]]--
 local sia_settings =
 {
-    charset = "iso-8859-1",          -- works for english and french subtitles (try also "Windows-1252")
-    --charset = "Windows-1251",
+    --charset = "iso-8859-1", -- works for english and french subtitles (try also "Windows-1252")
+    charset = "Windows-1251",
     --charset = nil,          -- UTF8 encoding
-    dict_dir = "C:/dict",            -- where Stardict dictionaries are located
-    wordnet_dir = "C:/dict/wordnet", -- where WordNet files are located
-    chosen_dict = "C:/dict/OxfordAmericanDictionaryEnEn", -- Stardict dictionary used by default (there should be 3 files with this name but different extensions)
-    words_file_path = nil, -- if 'nil' then "Desktop/sia_words.txt" will be used
+    dict_dir = "c:/!MY_DOCS/say_it_again/dict",            -- where Stardict dictionaries are located
+    wordnet_dir = "c:/!MY_DOCS/say_it_again/WordNet", -- where WordNet files are located
+    
+    -- magnet:?xt=urn:btih:0D65E1274ACB329EF1CD19716AB514F6FD6820EF&dn=Lingvo_x3_Stardict&tr=udp%3a%2f%2ftracker.openbittorrent.com%3a80&tr=udp%3a%2f%2ftracker.publicbt.com%3a80&tr=udp%3a%2f%2ftracker.istole.it%3a6969&tr=udp%3a%2f%2ftracker.ccc.de%3a80&tr=http%3a%2f%2fcomoros.ti.ru%2fannounce
+    --chosen_dict = "c:/!MY_DOCS/say_it_again/dict/Oxford Advanced Learner's Dictionary", -- Stardict dictionary used by default (there should be 3 files with this name but different extensions)
+    chosen_dict = "c:/!MY_DOCS/say_it_again/dict/OxfordAmericanDictionaryEnEn", -- Stardict dictionary used by default (there should be 3 files with this name but different extensions)
+    words_file_path = "c:/!My_docs/Dropbox/Documents/eng/iFlashcards/sia_words.txt", -- if 'nil' then "Desktop/sia_words.txt" will be used
     always_show_subtitles = false,
     osd_position = "top",
     help_duration = 6, -- sec; change to nil to disable osd help
@@ -75,7 +78,7 @@ local sia_settings =
     key_always_show_subs = 114, -- R
     
     -- global subtitles time shift to compensate vlc audio start delay or lack of subtitles synchronization
-    subs_time_shift = 0
+    subs_time_shift = -0.7
 }
 
 
