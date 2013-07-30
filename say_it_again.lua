@@ -79,9 +79,10 @@ local sia_settings =
 
 
 --[[  Global variables (no midifications beyond this point) ]]--
-local g_version = "0.0.6"
+local g_version = "0.0.8"
 local g_ignored_words = {"and", "the", "that", "not", "with", "you"}
 
+local g_conf_path = nil
 local g_osd_enabled = false
 local g_osd_channel = nil
 local g_dlg = {}
@@ -174,6 +175,9 @@ end
 -- extension activated
 function activate()
     log("Activate")
+
+    g_conf_path = vlc.config.configdir() .. (is_unix_platform() and "/" or "\\") .. "say_it_again.config.lua"
+    sia_settings:load()
 
     if vlc.object.input() and (sia_settings.chosen_dict or sia_settings.wordnet_dir) then
         gui_show_osd_loading()
@@ -274,6 +278,34 @@ end
 
 
 --[[  SIA Functions  ]]--
+
+function sia_settings:save()
+    local f, msg = io.open(g_conf_path, "w")
+    if not f then
+        log("Cant save config file: " .. (msg or "unknown error"))
+        return false
+    end
+
+    f:write("-- Say It Again configuration file\n")
+    f:write("return " .. table2str(self))
+    f:close()
+
+    return true
+end
+
+function sia_settings:load()
+    local userconf_f, msg = loadfile(g_conf_path)
+    if not userconf_f then
+        log("Cant load user config, saving default")
+        sia_settings:save()
+        return true
+    end
+
+    for k, v in pairs(userconf_f()) do self[k] = v end
+    print(self.dict_dir)
+
+    return true
+end
 
 function g_ignored_words:contains(word)
     for _, w in ipairs(self) do
@@ -654,16 +686,22 @@ end
 
 function gui_choose_dict()
     del_callbacks()
-    g_dict:load(gui_dict_from_list(g_found_dicts, g_dlg.w.list_dict:get_selection()))
-    gui_update_list_dicts()
+    local selected_dict = gui_dict_from_list(g_found_dicts, g_dlg.w.list_dict:get_selection())
+    if g_dict:load(selected_dict) then
+        gui_update_list_dicts()
+        sia_settings.chosen_dict = selected_dict
+        sia_settings:save()
+    end
     add_callbacks()
 end
 
 function gui_create_dialog_settings()
-    g_dlg.w.lbl_found_dicts = g_dlg.dlg:add_label("",1,1,10,1)
-    g_dlg.w.list_dict = g_dlg.dlg:add_list(1, 2, 10, 5)
-    g_dlg.w.lbl_note = g_dlg.dlg:add_label("Dictionaries marked with '*' have known format",1,7,10,1)
-    g_dlg.w.btn_choose = g_dlg.dlg:add_button("Choose", gui_choose_dict, 5,8,2,1)
+    g_dlg.w.lbl_config_path = g_dlg.dlg:add_label("Config file path:",1,1,3,1)
+    g_dlg.w.tb_config_path = g_dlg.dlg:add_text_input(g_conf_path,4,1,7,1)
+    g_dlg.w.lbl_found_dicts = g_dlg.dlg:add_label("",1,2,10,1)
+    g_dlg.w.list_dict = g_dlg.dlg:add_list(1, 3, 10, 5)
+    g_dlg.w.lbl_note = g_dlg.dlg:add_label("Dictionaries marked with '*' have known format",1,8,10,1)
+    g_dlg.w.btn_choose = g_dlg.dlg:add_button("Choose", gui_choose_dict, 5,9,2,1)
 end
 
 function gui_show_dialog_settings()
@@ -899,7 +937,7 @@ function gui_get_words_buttons(subtitle, cur_line)
             if g_wordnet and g_wordnet.loaded then -- try to search for lemma
                 lemma = g_wordnet:get_lemma(word:lower())
             end
-            table.insert(btns, g_dlg.dlg:add_button(word, function() g_dlg.w.tb_word:set_text(lemma) gui_lookup_word() end, i, cur_line, 1, 1))
+            table.insert(btns, g_dlg.dlg:add_button(word, function() g_dlg.w.tb_def:set_text("") g_dlg.w.tb_word:set_text(lemma) gui_lookup_word() end, i, cur_line, 1, 1))
             i = i + 1
             if i > 10 then
                 cur_line = cur_line + 1
@@ -1072,6 +1110,24 @@ function read_file_uri(uri)
 
 function is_nil_or_empty(str)
     return not str or str == ""
+end
+
+-- Represents a table as a string
+function table2str(tbl, level)
+    local res = "{\n"
+
+    for k,v in pairs(tbl) do
+        local vstr
+        if type(v) == "string" then vstr = string.format("%q", v)
+        elseif type(v) == "boolean" then vstr = v and "true" or "false"
+        elseif type(v) == "number" then vstr = v
+        elseif type(v) == "table" then vstr = table2str(v, (level or 1) + 1)
+        end
+
+        if vstr then res = res .. (string.rep("    ", level or 1) .. k .. " = " .. vstr .. ",\n") end
+    end
+
+    return res .. string.rep("    ", (level or 1) - 1) .. "}"
 end
 
 
