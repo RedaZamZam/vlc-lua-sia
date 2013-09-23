@@ -548,7 +548,7 @@ function input_events_handler(var, old, new, data)
 
     local _, subtitle, duration = g_subtitles:move(current_time)
     
-    if g_second_lang_enabled and subtitle and subtitle then     
+    if g_second_lang_enabled and subtitle then     
         local _, subtitle_n, duration_n = g_subtitles_native:move(g_subtitles.begin_time, g_subtitles.end_time)
         
         if subtitle_n and duration_n then
@@ -774,7 +774,7 @@ end
 function gui_add_prev_sub()
   g_dlg.w.tb_curr_s:set_text(g_subtitles:get_by_delta(g_dlg.prev_sub_diff) .. " " .. g_dlg.w.tb_curr_s:get_text())
   
-  if g_second_lang_enabled then
+  if g_dlg.second_lang_enabled then
      g_dlg.w.tb_curr_s2:set_text(g_subtitles_native:get_by_delta(g_dlg.prev_sub_diff) .. " " .. g_dlg.w.tb_curr_s2:get_text())
   end
   
@@ -782,7 +782,7 @@ function gui_add_prev_sub()
   
   local nextsub = g_subtitles:get_by_delta(g_dlg.prev_sub_diff)
   
-  if g_second_lang_enabled then
+  if g_dlg.second_lang_enabled then
      nextsub = nextsub .. " / " .. g_subtitles_native:get_by_delta(g_dlg.prev_sub_diff)
   end
   
@@ -792,7 +792,7 @@ end
 function gui_add_next_sub()
   g_dlg.w.tb_curr_s:set_text(g_dlg.w.tb_curr_s:get_text() .. " " .. g_subtitles:get_by_delta(g_dlg.next_sub_diff))
   
-  if g_second_lang_enabled then
+  if g_dlg.second_lang_enabled then
      g_dlg.w.tb_curr_s2:set_text(g_dlg.w.tb_curr_s2:get_text() .. " " .. g_subtitles_native:get_by_delta(g_dlg.next_sub_diff))
   end
   
@@ -800,7 +800,7 @@ function gui_add_next_sub()
   
   local nextsub = g_subtitles:get_by_delta(g_dlg.next_sub_diff)
   
-  if g_second_lang_enabled then
+  if g_dlg.second_lang_enabled then
      nextsub = nextsub .. " / " .. g_subtitles_native:get_by_delta(g_dlg.next_sub_diff)
   end
   
@@ -826,6 +826,7 @@ function gui_show_dialog_save_word(curr_subtitle)
 
     g_dlg.prev_sub_diff = 0
     g_dlg.next_sub_diff = 0
+    g_dlg.second_lang_enabled = g_subtitles_native.loaded
     
     gui_add_prev_sub()
     gui_add_next_sub()
@@ -834,7 +835,7 @@ function gui_show_dialog_save_word(curr_subtitle)
     
     local _, subtitle_n, _ = g_subtitles_native:move(g_subtitles.begin_time, g_subtitles.end_time)
   
-    if g_second_lang_enabled and subtitle_n then
+    if g_dlg.second_lang_enabled and subtitle_n then
         g_dlg.w.tb_curr_s2:set_text( subtitle_n )
     end
 
