@@ -1,3 +1,11 @@
+--[[
+    Extension doesn't work with VLC higher than 2.0.8 because vlc.net module was removed.
+    Check the status:
+        https://github.com/exebetche/vlsub/issues/28
+        https://trac.videolan.org/vlc/ticket/9495
+]]--    
+
+
 --[[   \   /        Say It Again - a VLC extension
  _______\_/______
 | .------------. |  "Learn a language while watching TV"
